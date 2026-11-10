@@ -1,0 +1,68 @@
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Environment Variables and Secrets
+.env
+.env.*
+!.env.example
+
+# Model Files
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.keras
+*.pt
+*.pth
+*.onnx
+
+# Dataset Files
+*.csv
+*.parquet
+*.zip
+*.rar
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build Files
+build/
+dist/
+*.egg-info/
+
+# ML Experiment Tracking
+mlruns/
+mlartifacts/
+wandb/
+
+# Temporary Files
+*.tmp
+*.bak
+*.swp
