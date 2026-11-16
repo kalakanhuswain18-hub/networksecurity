@@ -8,4 +8,5 @@ mysql-connector-python
 scikit-learn
 dill
 PyYAML
+mlflow
 -e .

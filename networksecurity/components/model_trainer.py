@@ -33,7 +33,7 @@ from networksecurity.utils.main_utils.utils import (
 from networksecurity.utils.ml_utils.metric.classification_metric import (
     get_classification_score
 )
-
+import mlflow
 
 class ModelTrainer:
 
@@ -54,9 +54,21 @@ class ModelTrainer:
             raise NetworkSecurityException(e, sys) from e
 
 
-    # -----------------------------------------------------
-    # TRAIN MODEL
-    # -----------------------------------------------------
+    def track_mlflow(self,best_model , classificationmetric):
+        with mlflow.start_run():
+            f1_score=classificationmetric.f1_score
+            precision_score=classificationmetric.precision_score
+            recall_score=classificationmetric.recall_score
+            mlflow.log_metric("f1_score",f1_score)
+            mlflow.log_metric("precision_score",precision_score)
+            mlflow.log_metric("recall_score",recall_score)
+            mlflow.sklearn.log_model(
+            sk_model=best_model,
+            artifact_path="model",
+            skops_trusted_types=["sklearn.tree._tree.Tree"]
+            )
+
+
 
     def train_model(self, X_train, X_test, y_train, y_test):
 
@@ -81,7 +93,7 @@ class ModelTrainer:
                 },
 
                 "Gradient Boosting": {
-                    "learning_rate": [.1, .01, .05, .001],
+                    "learning_rate": [.1, .01, .001],
                     "subsample": [0.6, 0.7, 0.75, 0.8, 0.85, 0.9],
                     "n_estimators": [8, 16, 32, 64, 128, 256]
                 },
@@ -123,6 +135,8 @@ class ModelTrainer:
                 y_true=y_train,
                 y_pred=y_train_pred
             )
+            #train the ml flow
+            self.track_mlflow(best_model,classification_train_metric)
 
             # Testing prediction
             y_test_pred = best_model.predict(X_test)
@@ -131,6 +145,8 @@ class ModelTrainer:
                 y_true=y_test,
                 y_pred=y_test_pred
             )
+            self.track_mlflow(best_model,classification_test_metric)
+
 
             # Load preprocessor object
             preprocessor = load_object(
@@ -173,10 +189,6 @@ class ModelTrainer:
 
             raise NetworkSecurityException(e, sys) from e
 
-
-    # -----------------------------------------------------
-    # INITIATE MODEL TRAINER
-    # -----------------------------------------------------
 
     def initiate_model_trainer(self) -> ModelTrainerArtifact:
 
