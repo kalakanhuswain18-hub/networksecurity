@@ -24,7 +24,7 @@ The dataset contains **11,055 records and 31 features** related to URL character
 ## 🏗️ Project Architecture
 
 <p align="center">
-  <img src="docs/Phishing%20Detection%20ML%20Architecture.png" alt="MySQL-based Network Security Project Architecture" width="100%" />
+  <img src="docs/MySQL%20Phishing%20Detection%20Pipeline.png" alt="MySQL-based Network Security Project Architecture" width="100%" />
 </p>
 
 ## ✨ Key Features
