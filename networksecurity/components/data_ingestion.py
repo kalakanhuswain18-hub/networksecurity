@@ -1,13 +1,10 @@
 
 import os
 import sys
-import socket
-from urllib.parse import quote_plus
 
-import certifi
+import mysql.connector
 import pandas as pd
 from dotenv import load_dotenv
-from pymongo import MongoClient
 from sklearn.model_selection import train_test_split
 
 from networksecurity.exception.exception import NetworkSecurityException
@@ -24,48 +21,14 @@ load_dotenv()
 
 
 # ---------------------------------------------------------
-# IPV4 WORKAROUND
+# MYSQL CONNECTION CONFIGURATION
 # ---------------------------------------------------------
 
-_original_getaddrinfo = socket.getaddrinfo
-
-
-def ipv4_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-
-    results = _original_getaddrinfo(
-        host, port, family, type, proto, flags
-    )
-
-    ipv4_results = [
-        result for result in results
-        if result[0] == socket.AF_INET
-    ]
-
-    return ipv4_results if ipv4_results else results
-
-
-socket.getaddrinfo = ipv4_getaddrinfo
-
-
-# ---------------------------------------------------------
-# MONGODB CONNECTION CONFIGURATION
-# ---------------------------------------------------------
-
-username = os.getenv("MONGO_DB_USERNAME")
-password = os.getenv("MONGO_DB_PASSWORD")
-cluster = os.getenv("MONGO_DB_CLUSTER")
-
-if not all([username, password, cluster]):
-    raise ValueError(
-        "MongoDB credentials missing. Check your .env file."
-    )
-
-
-MONGO_DB_URL = (
-    f"mongodb+srv://{quote_plus(username)}:"
-    f"{quote_plus(password)}@{cluster}/"
-    "?retryWrites=true&w=majority"
-)
+MYSQL_HOST = os.getenv("MYSQL_HOST")
+MYSQL_PORT = int(os.getenv("MYSQL_PORT", 3306))
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
 
 
 # ---------------------------------------------------------
@@ -77,71 +40,67 @@ class DataIngestion:
     def __init__(self, data_ingestion_config: DataIngestionConfig):
 
         try:
-
             logging.info("Data Ingestion initialized")
 
             self.data_ingestion_config = data_ingestion_config
 
         except Exception as e:
-
-            raise NetworkSecurityException(e, sys)
+            raise NetworkSecurityException(e, sys) from e
 
 
     # -----------------------------------------------------
-    # EXPORT DATA FROM MONGODB
+    # EXPORT DATA FROM MYSQL
     # -----------------------------------------------------
 
     def export_collection_as_dataframe(self):
 
+        connection = None
+        cursor = None
+
         try:
 
-            logging.info("Connecting to MongoDB Atlas")
+            logging.info("Connecting to MySQL database")
 
-            database_name = (
-                self.data_ingestion_config.database_name
+            if not all([
+                MYSQL_HOST,
+                MYSQL_USER,
+                MYSQL_PASSWORD,
+                MYSQL_DATABASE
+            ]):
+                raise ValueError(
+                    "MySQL credentials missing. Check your .env file."
+                )
+
+            connection = mysql.connector.connect(
+                host=MYSQL_HOST,
+                port=MYSQL_PORT,
+                user=MYSQL_USER,
+                password=MYSQL_PASSWORD,
+                database=MYSQL_DATABASE
             )
 
-            collection_name = (
-                self.data_ingestion_config.collection_name
+            logging.info("MySQL Connected Successfully!")
+
+            cursor = connection.cursor()
+
+            cursor.execute("SELECT * FROM network_data")
+
+            records = cursor.fetchall()
+
+            columns = [column[0] for column in cursor.description]
+
+            if not records:
+                raise ValueError("MySQL table is empty")
+
+            dataframe = pd.DataFrame(
+                records,
+                columns=columns
             )
 
-            mongo_client = MongoClient(
-                MONGO_DB_URL,
-                tls=True,
-                tlsCAFile=certifi.where(),
-                serverSelectionTimeoutMS=30000,
-                connectTimeoutMS=30000
-            )
-
-            try:
-
-                mongo_client.admin.command("ping")
-
-                logging.info("MongoDB Connected Successfully!")
-
-                collection = mongo_client[
-                    database_name
-                ][
-                    collection_name
-                ]
-
-                records = list(collection.find())
-
-                if not records:
-                    raise ValueError(
-                        "MongoDB collection is empty"
-                    )
-
-                dataframe = pd.DataFrame(records)
-
-            finally:
-
-                mongo_client.close()
-
-            if "_id" in dataframe.columns:
-
+            # Remove MySQL auto-increment ID
+            if "id" in dataframe.columns:
                 dataframe.drop(
-                    columns=["_id"],
+                    columns=["id"],
                     inplace=True
                 )
 
@@ -153,7 +112,15 @@ class DataIngestion:
 
         except Exception as e:
 
-            raise NetworkSecurityException(e, sys)
+            raise NetworkSecurityException(e, sys) from e
+
+        finally:
+
+            if cursor is not None:
+                cursor.close()
+
+            if connection is not None and connection.is_connected():
+                connection.close()
 
 
     # -----------------------------------------------------
@@ -192,7 +159,7 @@ class DataIngestion:
 
         except Exception as e:
 
-            raise NetworkSecurityException(e, sys)
+            raise NetworkSecurityException(e, sys) from e
 
 
     # -----------------------------------------------------
@@ -246,27 +213,17 @@ class DataIngestion:
                 header=True
             )
 
-            logging.info(
-                f"Training data saved: {train_path}"
-            )
+            logging.info(f"Training data saved: {train_path}")
+            logging.info(f"Testing data saved: {test_path}")
 
-            logging.info(
-                f"Testing data saved: {test_path}"
-            )
-
-            logging.info(
-                f"Train shape: {train_set.shape}"
-            )
-
-            logging.info(
-                f"Test shape: {test_set.shape}"
-            )
+            logging.info(f"Train shape: {train_set.shape}")
+            logging.info(f"Test shape: {test_set.shape}")
 
             return train_path, test_path
 
         except Exception as e:
 
-            raise NetworkSecurityException(e, sys)
+            raise NetworkSecurityException(e, sys) from e
 
 
     # -----------------------------------------------------
@@ -279,7 +236,7 @@ class DataIngestion:
 
             logging.info("Starting Data Ingestion")
 
-            # Step 1: Fetch data
+            # Step 1: Fetch data from MySQL
             dataframe = self.export_collection_as_dataframe()
 
             # Step 2: Feature store
@@ -306,4 +263,4 @@ class DataIngestion:
 
         except Exception as e:
 
-            raise NetworkSecurityException(e, sys)
+            raise NetworkSecurityException(e, sys) from e

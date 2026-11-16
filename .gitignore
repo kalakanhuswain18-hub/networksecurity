@@ -4,7 +4,8 @@ venv/
 .venv/
 env/
 ENV/
-
+# Generated ML Artifacts
+Artifacts/
 # Python Cache
 __pycache__/
 *.py[cod]
