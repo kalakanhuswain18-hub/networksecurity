@@ -3,6 +3,7 @@ import os
 import sys
 
 import pandas as pd
+import mysql.connector
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +18,10 @@ from networksecurity.logging.logger import logging
 from networksecurity.pipeline.training_pipeline import TrainingPipeline
 
 
-# Initialize FastAPI
+# ---------------------------------------------------------
+# INITIALIZE FASTAPI
+# ---------------------------------------------------------
+
 app = FastAPI(
     title="Network Security - Phishing Website Detection API",
     description="ML-powered phishing website detection system",
@@ -25,8 +29,6 @@ app = FastAPI(
 )
 
 
-# CORS Configuration
-# Configure your actual Vercel frontend URL before production.
 origins = ["*"]
 
 app.add_middleware(
@@ -38,13 +40,14 @@ app.add_middleware(
 )
 
 
-# Home Route
+
 @app.get("/", tags=["Authentication"])
 async def index():
     return RedirectResponse(url="/docs")
 
 
-# Health Check Route
+
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {
@@ -54,9 +57,67 @@ async def health_check():
     }
 
 
-# Training Route
+# ---------------------------------------------------------
+# DATABASE HEALTH CHECK ROUTE
+# ---------------------------------------------------------
+
+@app.get("/db-health", tags=["Health"])
+def database_health():
+
+    connection = None
+    cursor = None
+
+    try:
+        logging.info("Checking MySQL database connection")
+
+        connection = mysql.connector.connect(
+            host=os.getenv("MYSQL_HOST"),
+            port=int(os.getenv("MYSQL_PORT", 3306)),
+            user=os.getenv("MYSQL_USER"),
+            password=os.getenv("MYSQL_PASSWORD"),
+            database=os.getenv("MYSQL_DATABASE"),
+            connection_timeout=10
+        )
+
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM network_data")
+
+        total_records = cursor.fetchone()[0]
+
+        logging.info(
+            f"MySQL database connected successfully. Records: {total_records}"
+        )
+
+        return {
+            "success": True,
+            "database": "connected",
+            "total_records": total_records
+        }
+
+    except Exception as e:
+
+        logging.error(f"Database connection failed: {e}")
+
+        raise HTTPException(
+            status_code=500,
+            detail="Database connection failed. Check database configuration and table."
+        )
+
+    finally:
+
+        if cursor is not None:
+            cursor.close()
+
+        if connection is not None and connection.is_connected():
+            connection.close()
+
+
+
+
 @app.get("/train", tags=["Training"])
 def train_route():
+
     try:
         logging.info("Training pipeline started")
 
@@ -69,6 +130,7 @@ def train_route():
         }
 
     except Exception as e:
+
         logging.error(f"Training failed: {e}")
 
         raise HTTPException(
@@ -77,24 +139,30 @@ def train_route():
         )
 
 
-# Prediction Route
+
+
 @app.post("/predict", tags=["Prediction"])
 async def predict_route(file: UploadFile = File(...)):
 
     try:
+
         # Validate uploaded file
         if not file.filename or not file.filename.lower().endswith(".csv"):
+
             raise HTTPException(
                 status_code=400,
                 detail="Please upload a valid CSV file"
             )
 
-        logging.info(f"Prediction started for file: {file.filename}")
+        logging.info(
+            f"Prediction started for file: {file.filename}"
+        )
 
         # Read uploaded CSV
         df = pd.read_csv(file.file)
 
         if df.empty:
+
             raise HTTPException(
                 status_code=400,
                 detail="Uploaded CSV file is empty"
@@ -127,7 +195,10 @@ async def predict_route(file: UploadFile = File(...)):
         legitimate_count = int((y_pred == 0).sum())
 
         # Save prediction output
-        os.makedirs("prediction_output", exist_ok=True)
+        os.makedirs(
+            "prediction_output",
+            exist_ok=True
+        )
 
         df.to_csv(
             "prediction_output/output.csv",
@@ -153,6 +224,7 @@ async def predict_route(file: UploadFile = File(...)):
         raise
 
     except Exception as e:
+
         logging.error(f"Prediction failed: {e}")
 
         raise HTTPException(
@@ -164,8 +236,12 @@ async def predict_route(file: UploadFile = File(...)):
         await file.close()
 
 
-# Run Application
+# ---------------------------------------------------------
+# RUN APPLICATION
+# ---------------------------------------------------------
+
 if __name__ == "__main__":
+
     app_run(
         app,
         host="0.0.0.0",
