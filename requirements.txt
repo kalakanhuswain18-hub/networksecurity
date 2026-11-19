@@ -1,5 +1,6 @@
+
 python-dotenv
-pandas 
+pandas
 numpy
 matplotlib
 seaborn
@@ -12,4 +13,6 @@ mlflow
 dagshub
 fastapi
 uvicorn
--e .
+python-multipart
+jinja2
+# -e .

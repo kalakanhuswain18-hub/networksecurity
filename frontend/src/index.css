@@ -1,0 +1,71 @@
+@import "tailwindcss";
+:root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#020603; }
+* { box-sizing:border-box; }
+html,body,#root { min-width:320px; min-height:100%; margin:0; background:#020603; }
+button,input { font:inherit; } button { cursor:pointer; }
+.matrix-shell { position:relative; isolation:isolate; background:radial-gradient(ellipse at 50% -15%,rgba(27,110,18,.19),transparent 48%),linear-gradient(145deg,#020603,#030b04 48%,#010402); }
+.matrix-rain { position:fixed; inset:0; z-index:-3; width:100%; height:100%; pointer-events:none; opacity:.24; }
+.matrix-grid { position:fixed; inset:0; z-index:-2; pointer-events:none; opacity:.16; background-image:linear-gradient(rgba(57,255,20,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(57,255,20,.12) 1px,transparent 1px); background-size:42px 42px; mask-image:linear-gradient(to bottom,black,transparent 92%); }
+.matrix-glow { position:fixed; z-index:-1; width:380px; height:380px; border-radius:50%; pointer-events:none; filter:blur(110px); opacity:.16; }
+.matrix-glow-one { top:-180px; left:15%; background:#39ff14; } .matrix-glow-two { right:-180px; bottom:-180px; background:#00ff66; }
+.matrix-scanline { position:fixed; inset:0; z-index:5; pointer-events:none; opacity:.12; background:repeating-linear-gradient(to bottom,transparent 0,rgba(100,255,100,.08) 1px,transparent 2px,transparent 4px); }
+.matrix-card { position:relative; border:1px solid rgba(57,255,20,.18); background:linear-gradient(145deg,rgba(5,18,7,.94),rgba(2,9,3,.94)); box-shadow:0 0 0 1px rgba(57,255,20,.025),0 12px 38px rgba(0,0,0,.32),inset 0 1px rgba(120,255,120,.035); backdrop-filter:blur(16px); transition:border-color .25s,box-shadow .25s,transform .25s; }
+.matrix-card:hover { border-color:rgba(57,255,20,.42); box-shadow:0 0 24px rgba(57,255,20,.075),0 16px 44px rgba(0,0,0,.4); }
+.matrix-button { border:1px solid rgba(120,255,90,.75); background:linear-gradient(100deg,#39ff14,#9aff70); box-shadow:0 0 18px rgba(57,255,20,.24),inset 0 1px rgba(255,255,255,.5); transition:filter .2s,box-shadow .2s; }
+.matrix-button:hover { filter:brightness(1.08); box-shadow:0 0 28px rgba(57,255,20,.4); }
+.matrix-upload-zone { border-color:rgba(57,255,20,.32); background:linear-gradient(rgba(57,255,20,.025),rgba(57,255,20,.01)),rgba(0,8,2,.82); transition:background .2s,border-color .2s; }
+.matrix-upload-zone:hover { border-color:rgba(57,255,20,.65); background-color:rgba(57,255,20,.045); }
+.matrix-heading { text-shadow:0 0 22px rgba(57,255,20,.24); }
+.matrix-sidebar-active { border:1px solid rgba(57,255,20,.18); background:linear-gradient(90deg,rgba(57,255,20,.12),rgba(57,255,20,.025)); box-shadow:inset 3px 0 #39ff14,0 0 18px rgba(57,255,20,.045); }
+.matrix-logo-glow { box-shadow:0 0 22px rgba(57,255,20,.15),inset 0 0 14px rgba(57,255,20,.08); }
+.matrix-progress { animation:matrix-progress 1.2s ease-in-out infinite; }
+@keyframes matrix-progress { 0%{transform:translateX(-130%)} 100%{transform:translateX(330%)} }
+.status-dot { box-shadow:0 0 10px currentColor; }
+::selection { color:#001800; background:#39ff14; }
+::-webkit-scrollbar { width:8px;height:8px; } ::-webkit-scrollbar-track { background:#020603; } ::-webkit-scrollbar-thumb { border-radius:99px;background:rgba(57,255,20,.25); }
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;}}
+
+
+/* Sidebar stays anchored while the dashboard content scrolls. */
+@media (min-width: 1024px) {
+  .matrix-shell > .relative.z-10 > aside {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    min-height: 100vh;
+    flex: 0 0 255px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(57,255,20,.22) transparent;
+  }
+}
+
+
+/* Improve readability of prediction table values and column headings. */
+.matrix-card table thead th {
+  color: #9be88f !important;
+  font-weight: 800;
+  letter-spacing: .09em;
+  background: rgba(20, 75, 18, .24);
+  text-shadow: 0 0 10px rgba(57, 255, 20, .12);
+}
+.matrix-card table tbody td {
+  color: #d5f5d0 !important;
+  font-weight: 550;
+}
+.matrix-card table tbody tr {
+  background: rgba(2, 12, 3, .28);
+  transition: background-color .18s ease;
+}
+.matrix-card table tbody tr:hover {
+  background: rgba(57, 255, 20, .075);
+}
+.matrix-card table tbody td:first-child {
+  color: #9be88f !important;
+  font-weight: 800;
+}
+.matrix-card input::placeholder {
+  color: #82977f;
+  opacity: 1;
+}
