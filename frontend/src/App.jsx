@@ -29,45 +29,98 @@ function escapeCSV(value) {
 
 function MatrixRain() {
   const canvasRef = useRef(null)
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: true })
     if (!ctx) return
-    let frame
+
+    let frameId = 0
+    let lastFrameTime = 0
+    let scrollTimer = 0
+    let isPaused = false
     let drops = []
     const chars = 'アカサタナハマヤラワ012345789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    const FRAME_INTERVAL = 1000 / 22
+
     function resize() {
-      const ratio = Math.min(window.devicePixelRatio || 1, 1.5)
-      canvas.width = window.innerWidth * ratio
-      canvas.height = window.innerHeight * ratio
-      canvas.style.width = `${window.innerWidth}px`
-      canvas.style.height = `${window.innerHeight}px`
+      // A capped pixel ratio reduces the amount of canvas work on high-DPI screens.
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.15)
+      const width = window.innerWidth
+      const height = window.innerHeight
+      canvas.width = Math.round(width * ratio)
+      canvas.height = Math.round(height * ratio)
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
-      drops = Array.from({ length: Math.ceil(window.innerWidth / 19) },
-        () => Math.floor(Math.random() * (window.innerHeight / 18)))
+      drops = Array.from({ length: Math.ceil(width / 27) },
+        () => Math.floor(Math.random() * (height / 24)))
+      ctx.clearRect(0, 0, width, height)
     }
-    function draw() {
-      ctx.fillStyle = 'rgba(0, 5, 1, 0.09)'
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight)
-      ctx.font = '13px monospace'
-      drops.forEach((drop, i) => {
-        ctx.fillStyle = Math.random() > 0.975 ? '#d7ffd0' : '#39ff14'
-        ctx.globalAlpha = Math.random() > 0.92 ? 0.85 : 0.35
-        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 19, drop * 18)
+
+    function draw(now) {
+      if (isPaused || document.hidden) return
+      if (now - lastFrameTime >= FRAME_INTERVAL) {
+        lastFrameTime = now
+        const width = window.innerWidth
+        const height = window.innerHeight
+        ctx.fillStyle = 'rgba(0, 5, 1, 0.13)'
+        ctx.fillRect(0, 0, width, height)
+        ctx.font = '12px monospace'
+
+        drops.forEach((drop, i) => {
+          ctx.fillStyle = Math.random() > 0.985 ? '#d7ffd0' : '#39ff14'
+          ctx.globalAlpha = Math.random() > 0.94 ? 0.75 : 0.28
+          ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 27, drop * 24)
+          drops[i] = drop * 24 > height && Math.random() > 0.98 ? 0 : drop + 1
+        })
         ctx.globalAlpha = 1
-        drops[i] = drop * 18 > window.innerHeight && Math.random() > 0.975 ? 0 : drop + 1
-      })
-      frame = requestAnimationFrame(draw)
+      }
+      frameId = requestAnimationFrame(draw)
     }
+
+    function stopAnimation() {
+      isPaused = true
+      cancelAnimationFrame(frameId)
+    }
+
+    function startAnimation() {
+      if (!isPaused && !document.hidden) return
+      isPaused = false
+      lastFrameTime = 0
+      cancelAnimationFrame(frameId)
+      frameId = requestAnimationFrame(draw)
+    }
+
+    function handleScroll() {
+      // Pause the decorative canvas while the user is actively scrolling.
+      stopAnimation()
+      window.clearTimeout(scrollTimer)
+      scrollTimer = window.setTimeout(startAnimation, 220)
+    }
+
+    function handleVisibility() {
+      if (document.hidden) stopAnimation()
+      else startAnimation()
+    }
+
     resize()
-    draw()
-    window.addEventListener('resize', resize)
+    isPaused = false
+    frameId = requestAnimationFrame(draw)
+    window.addEventListener('resize', resize, { passive: true })
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    document.addEventListener('visibilitychange', handleVisibility)
+
     return () => {
-      cancelAnimationFrame(frame)
+      cancelAnimationFrame(frameId)
+      window.clearTimeout(scrollTimer)
       window.removeEventListener('resize', resize)
+      window.removeEventListener('scroll', handleScroll)
+      document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [])
+
   return <canvas ref={canvasRef} className="matrix-rain" aria-hidden="true" />
 }
 
@@ -446,7 +499,7 @@ export default function App() {
         />
 
         <div className="min-w-0 flex-1">
-          <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-green-400/[0.09] bg-[#020603]/90 px-5 backdrop-blur-2xl md:px-8">
+          <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-green-400/[0.09] bg-[#020603]/95 px-5 md:px-8">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(true)}
