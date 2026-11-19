@@ -1,3 +1,4 @@
+
 # 🛡️ Network Security – Phishing Website Detection
 
 <p align="center">
@@ -8,7 +9,16 @@
   <img src="https://img.shields.io/badge/Python-3.11-blue?logo=python" />
   <img src="https://img.shields.io/badge/MySQL-Database-blue?logo=mysql" />
   <img src="https://img.shields.io/badge/Scikit--Learn-Machine%20Learning-orange?logo=scikitlearn" />
-  <img src="https://img.shields.io/badge/Status-In%20Development-yellow" />
+  <img src="https://img.shields.io/badge/Status-Deployed-brightgreen" />
+</p>
+<br/>
+<br/>
+
+
+<p align="center">
+  <a href="https://networksecurity-seven.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/🌐_LIVE_DEMO-OPEN_PROJECT-brightgreen?style=for-the-badge" />
+  </a>
 </p>
 
 ---
