@@ -57,19 +57,14 @@ async def health_check():
     }
 
 
-# ---------------------------------------------------------
-# DATABASE HEALTH CHECK ROUTE
-# ---------------------------------------------------------
 
 @app.get("/db-health", tags=["Health"])
-def database_health():
+def database_health_check():
+    import mysql.connector
 
     connection = None
-    cursor = None
 
     try:
-        logging.info("Checking MySQL database connection")
-
         connection = mysql.connector.connect(
             host=os.getenv("MYSQL_HOST"),
             port=int(os.getenv("MYSQL_PORT", 3306)),
@@ -79,25 +74,14 @@ def database_health():
             connection_timeout=10
         )
 
-        cursor = connection.cursor()
-
-        cursor.execute("SELECT COUNT(*) FROM network_data")
-
-        total_records = cursor.fetchone()[0]
-
-        logging.info(
-            f"MySQL database connected successfully. Records: {total_records}"
-        )
-
         return {
             "success": True,
             "database": "connected",
-            "total_records": total_records
+            "message": "Railway MySQL connected successfully"
         }
 
     except Exception as e:
-
-        logging.error(f"Database connection failed: {e}")
+        logging.error(f"Database health check failed: {e}")
 
         raise HTTPException(
             status_code=500,
@@ -105,14 +89,8 @@ def database_health():
         )
 
     finally:
-
-        if cursor is not None:
-            cursor.close()
-
-        if connection is not None and connection.is_connected():
+        if connection and connection.is_connected():
             connection.close()
-
-
 
 
 @app.get("/train", tags=["Training"])
