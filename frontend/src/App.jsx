@@ -291,7 +291,7 @@ function Sidebar({ open, onClose, apiStatus, onCheck }) {
                 apiStatus === 'online' ? 'text-emerald-400' :
                 apiStatus === 'checking' ? 'text-amber-300' : 'text-red-400'
               }`}>
-                <span className="status-dot h-1.5 w-1.5 rounded-full bg-current" />
+                <span className={`status-dot h-1.5 w-1.5 rounded-full bg-current ${apiStatus === 'online' ? 'status-pulse' : ''}`} />
                 {apiStatus === 'online' ? 'ONLINE' :
                   apiStatus === 'checking' ? 'CHECKING' : 'OFFLINE'}
               </span>
@@ -518,7 +518,7 @@ export default function App() {
             </div>
             <div className="flex items-center gap-2 rounded-full border border-green-400/15 bg-green-400/[0.045] px-3 py-2 text-[10px] font-semibold tracking-wider">
               <span className={`h-2 w-2 rounded-full ${
-                apiStatus === 'online' ? 'bg-emerald-400 shadow-[0_0_10px_#34d399]' :
+                apiStatus === 'online' ? 'bg-emerald-400 shadow-[0_0_10px_#34d399] status-pulse' :
                 apiStatus === 'checking' ? 'bg-amber-400' : 'bg-red-400'
               }`} />
               {apiStatus === 'online' ? 'SYSTEM ONLINE' :

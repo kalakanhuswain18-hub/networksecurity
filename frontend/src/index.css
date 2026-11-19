@@ -82,3 +82,17 @@ button,input { font:inherit; } button { cursor:pointer; }
   .matrix-rain { display: none; }
   .matrix-card, .matrix-button { transition: none !important; }
 }
+
+
+/* Soft heartbeat for live API indicators only. */
+.status-pulse {
+  animation: status-heartbeat 1.25s ease-in-out infinite;
+  will-change: opacity, box-shadow;
+}
+@keyframes status-heartbeat {
+  0%, 100% { opacity: 1; box-shadow: 0 0 3px currentColor, 0 0 9px currentColor; }
+  50% { opacity: .28; box-shadow: 0 0 0 currentColor; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-pulse { animation: none !important; opacity: 1; }
+}
