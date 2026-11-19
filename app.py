@@ -81,12 +81,12 @@ def database_health_check():
         }
 
     except Exception as e:
-        logging.error(f"Database health check failed: {e}")
+        print("DB HEALTH ERROR:", repr(e), flush=True)
 
         raise HTTPException(
-            status_code=500,
-            detail="Database connection failed. Check database configuration and table."
-        )
+        status_code=500,
+        detail="Database connection failed. Check Render logs."
+    )
 
     finally:
         if connection and connection.is_connected():
